@@ -1,25 +1,34 @@
-﻿using ImageStorage.Application.Handlers.Base;
-using ImageStorage.Application.RequestModels;
-using ImageStorage.Application.ResponseModels;
+﻿using ImageStorage.Application.Common;
+using ImageStorage.Application.Handlers.Base;
+using ImageStorage.Application.Requests;
+using ImageStorage.Application.Responses;
 using ImageStorage.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ImageStorage.Application.Handlers;
 
-public class AddImageHandler : BaseUseCaseHandler<UserAddImageRequest, UserAddImageResponse>
+public class AddImageHandler : BaseUseCaseHandler<AddImageRequest, AddImageResponse>
 {
     public AddImageHandler(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
-    public override async Task<UserAddImageResponse> Handle(UserAddImageRequest request)
+    public override async Task<AddImageResponse> Handle(AddImageRequest request)
     {
-        var result = new UserAddImageResponse();
+        var result = new AddImageResponse();
 
-        // todo: выкидывает exception
-        Guid userId = SessionContext.GetRequiredAuthorizedUserId();
+        if(!SessionContext.TryGetRequiredAuthorizedUserId(out Guid userId))
+        {
+            result.AddError(new(OperationErrorCode.NotAuthorized));
+            return result;
+        }
 
         Image image = Image.CreateImage(request.FileName);
 
-        // todo: 400, если не подходит расширение
+        if(!ImagesStorageAccessor.IsFileExtensionAllowed(request.FileName))
+        {
+            result.AddError(new("File extension is not allowed."));
+            return result;
+        }
+
         var fileStream = ImagesStorageAccessor.CreateFileStreamForSaving(userId, request.FileName, image.Id);
         await request.FileUploader.CopyToAsync(fileStream);
 
@@ -29,15 +38,26 @@ public class AddImageHandler : BaseUseCaseHandler<UserAddImageRequest, UserAddIm
 
         user.AddImage(image);
 
+        int savedEntitiesCount;
+
         try
         {
-            var savedEntitiesCount = await DbAccessor.SaveChangesAsync();
-
-            // todo:
+            savedEntitiesCount = await DbAccessor.SaveChangesAsync();
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            // todo: откат сохранения в репозиторий
+            // откатить сохранение изображения в файловой системе
+            ImagesStorageAccessor.DeleteFile(userId, image.Id);
+
+            throw;
+        }
+
+        if (savedEntitiesCount == 0)
+        {
+            ImagesStorageAccessor.DeleteFile(userId, image.Id);
+
+            result.AddError(new(OperationErrorCode.ServerError, "Cannot save image to database."));
+            return result;
         }
 
         result.Value = image;

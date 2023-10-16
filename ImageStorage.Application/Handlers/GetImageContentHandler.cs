@@ -1,21 +1,25 @@
-﻿using ImageStorage.Application.Handlers.Base;
-using ImageStorage.Application.RequestModels;
-using ImageStorage.Application.ResponseModels;
+﻿using ImageStorage.Application.Common;
+using ImageStorage.Application.Handlers.Base;
+using ImageStorage.Application.Requests;
+using ImageStorage.Application.Responses;
 using ImageStorage.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ImageStorage.Application.Handlers;
 
-public class GetImageContentHandler : BaseUseCaseHandler<UserGetImageContentRequest, UserGetImageContentResponse>
+public class GetImageContentHandler : BaseUseCaseHandler<GetImageContentRequest, GetImageContentResponse>
 {
     public GetImageContentHandler(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
-    public override async Task<UserGetImageContentResponse> Handle(UserGetImageContentRequest request)
+    public override async Task<GetImageContentResponse> Handle(GetImageContentRequest request)
     {
-        var result = new UserGetImageContentResponse();
+        var result = new GetImageContentResponse();
 
-        // todo: выкидывает exception
-        Guid userId = SessionContext.GetRequiredAuthorizedUserId();
+        if (!SessionContext.TryGetRequiredAuthorizedUserId(out Guid userId))
+        {
+            result.AddError(new(OperationErrorCode.NotAuthorized));
+            return result;
+        }
 
         Image? image = await DbAccessor.Images
             .AsNoTracking()
@@ -25,8 +29,7 @@ public class GetImageContentHandler : BaseUseCaseHandler<UserGetImageContentRequ
 
         if (image == null || !image.UserHasAccess(userId))
         {
-            // todo:
-            //result.AddError();
+            result.AddError(new(OperationErrorCode.AccessDenied));
             return result;
         }
 

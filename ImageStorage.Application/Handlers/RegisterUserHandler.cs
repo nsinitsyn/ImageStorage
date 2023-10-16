@@ -1,19 +1,20 @@
-﻿using ImageStorage.Application.Exceptions;
+﻿using ImageStorage.Application.Common;
+using ImageStorage.Application.Exceptions;
 using ImageStorage.Application.Handlers.Base;
-using ImageStorage.Application.RequestModels;
-using ImageStorage.Application.ResponseModels;
+using ImageStorage.Application.Requests;
+using ImageStorage.Application.Responses;
 using ImageStorage.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace ImageStorage.Application.Handlers;
 
-public class RegisterUserHandler : BaseUseCaseHandler<UserRegisterRequest, UserRegisterResponse>
+public class RegisterUserHandler : BaseUseCaseHandler<RegisterUserRequest, RegisterUserResponse>
 {
     public RegisterUserHandler(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
-    public override async Task<UserRegisterResponse> Handle(UserRegisterRequest request)
+    public override async Task<RegisterUserResponse> Handle(RegisterUserRequest request)
     {
-        var result = new UserRegisterResponse();
+        var result = new RegisterUserResponse();
 
         if (SessionContext.AuthorizedUserId != null)
         {
@@ -47,8 +48,7 @@ public class RegisterUserHandler : BaseUseCaseHandler<UserRegisterRequest, UserR
 
             if (savedEntitiesCount == 0)
             {
-                // todo: ошибка не для клиента и код 500 должен быть
-                result.AddError(new("Cannot save user to database."));
+                result.AddError(new(OperationErrorCode.ServerError, "Cannot save user to database."));
                 return result;
             }
         }
@@ -58,7 +58,6 @@ public class RegisterUserHandler : BaseUseCaseHandler<UserRegisterRequest, UserR
             return result;
         }
 
-        // todo: ошибка с требованием ручного вмешательства
         ImagesStorageAccessor.EnsureUserDirectoryExists(user.Id);
 
         result.Value = user;

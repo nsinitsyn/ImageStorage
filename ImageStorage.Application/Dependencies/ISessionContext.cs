@@ -4,5 +4,5 @@ public interface ISessionContext
 {
     Guid? AuthorizedUserId { get; }
 
-    Guid GetRequiredAuthorizedUserId();
+    bool TryGetRequiredAuthorizedUserId(out Guid userId);
 }

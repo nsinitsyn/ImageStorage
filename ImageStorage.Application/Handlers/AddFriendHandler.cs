@@ -1,26 +1,25 @@
-﻿using ImageStorage.Application.Exceptions;
+﻿using ImageStorage.Application.Common;
+using ImageStorage.Application.Exceptions;
 using ImageStorage.Application.Handlers.Base;
-using ImageStorage.Application.RequestModels;
-using ImageStorage.Application.ResponseModels;
+using ImageStorage.Application.Requests;
+using ImageStorage.Application.Responses;
 using ImageStorage.Domain.Entities;
 using ImageStorage.Domain.Exceptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace ImageStorage.Application.Handlers;
 
-public class AddFriendHandler : BaseUseCaseHandler<UserAddFriendRequest, UserAddFriendResponse>
+public class AddFriendHandler : BaseUseCaseHandler<AddFriendRequest, AddFriendResponse>
 {
     public AddFriendHandler(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
-    public override async Task<UserAddFriendResponse> Handle(UserAddFriendRequest request)
+    public override async Task<AddFriendResponse> Handle(AddFriendRequest request)
     {
-        var result = new UserAddFriendResponse();
+        var result = new AddFriendResponse();
 
-        Guid? userId = SessionContext.AuthorizedUserId;
-
-        if (userId == null)
+        if (!SessionContext.TryGetRequiredAuthorizedUserId(out Guid userId))
         {
-            result.AddError(new($"User not authorized."));
+            result.AddError(new(OperationErrorCode.NotAuthorized));
             return result;
         }
 
@@ -37,10 +36,9 @@ public class AddFriendHandler : BaseUseCaseHandler<UserAddFriendRequest, UserAdd
         User? friend = await DbAccessor.Users
             .FirstOrDefaultAsync(x => x.Id == request.FriendId);
 
-        // todo: это 404
         if (friend == null)
         {
-            result.AddError(new($"Cannot find friend user with id={request.FriendId}."));
+            result.AddError(new(OperationErrorCode.NotFound));
         }
 
         if (!result.IsSucceeded)
@@ -54,7 +52,6 @@ public class AddFriendHandler : BaseUseCaseHandler<UserAddFriendRequest, UserAdd
         }
         catch (DomainException ex)
         {
-            // todo: эти ошибки не показываются в UI
             result.AddError(new(ex.Message));
             return result;
         }
@@ -65,15 +62,13 @@ public class AddFriendHandler : BaseUseCaseHandler<UserAddFriendRequest, UserAdd
 
             if (savedEntitiesCount == 0)
             {
-                // todo: ошибка не для клиента и код 500 должен быть
-                result.AddError(new("Cannot save user to database."));
+                result.AddError(new(OperationErrorCode.ServerError, "Cannot save user to database."));
                 return result;
             }
         }
-        catch (ConcurrencyConflictException ex)
+        catch (ConcurrencyConflictException)
         {
-            // todo: отлавливать ошибку, что этого друга уже добавили.
-            // result.AddError(new($"User with the same {ex.PropertyName} has already registered."));
+            result.AddError(new($"Friends list has already contains this user."));
         }
 
         return result;

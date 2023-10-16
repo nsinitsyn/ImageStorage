@@ -1,8 +1,8 @@
 ﻿using ImageStorage.Application.Common;
 
-namespace ImageStorage.Application.ResponseModels;
+namespace ImageStorage.Application.Responses;
 
-public class UserGetImageContentResponse : OperationResult
+public class GetImageContentResponse : OperationResult
 {
     public string FileName { get; set; }
 

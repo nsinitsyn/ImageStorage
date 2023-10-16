@@ -6,13 +6,15 @@ public class SessionContext : ISessionContext, ISessionContextWriter
 {
     public Guid? AuthorizedUserId { get; set; }
 
-    public Guid GetRequiredAuthorizedUserId()
+    public bool TryGetRequiredAuthorizedUserId(out Guid userId)
     {
         if(AuthorizedUserId == null)
         {
-            throw new InvalidOperationException("User not authorized.");
+            userId = Guid.Empty;
+            return false;
         }
 
-        return (Guid)AuthorizedUserId;
+        userId =(Guid)AuthorizedUserId;
+        return true;
     }
 }

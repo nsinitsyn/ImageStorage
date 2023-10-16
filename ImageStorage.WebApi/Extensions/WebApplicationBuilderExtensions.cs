@@ -1,10 +1,5 @@
 ﻿using ImageStorage.Application;
 using ImageStorage.Application.Dependencies;
-using ImageStorage.Application.Handlers;
-using ImageStorage.Application.Handlers.Base;
-using ImageStorage.Application.RequestModels;
-using ImageStorage.Application.ResponseModels;
-using ImageStorage.Application.Services;
 using ImageStorage.Infrastructure.Configuration;
 using ImageStorage.Infrastructure.DbAccess;
 using ImageStorage.Infrastructure.FileStorage;

@@ -1,6 +1,6 @@
 using ImageStorage.Application.Handlers.Base;
-using ImageStorage.Application.RequestModels;
-using ImageStorage.Application.ResponseModels;
+using ImageStorage.Application.Requests;
+using ImageStorage.Application.Responses;
 using ImageStorage.Domain.Entities;
 using ImageStorage.WebApi.Helpers;
 using ImageStorage.WebApi.ViewModels;
@@ -10,87 +10,72 @@ using Microsoft.AspNetCore.Mvc;
 namespace ImageStorage.WebApi.Controllers
 {
     [ApiController, Route("[controller]"), Authorize]
-    public class ImageController : ControllerBase
+    public class ImageController : BaseController
     {
-        private readonly ILogger<ImageController> _logger;
-
-        public ImageController(ILogger<ImageController> logger)
-        {
-            _logger = logger;
-        }
+        public ImageController(ILogger<BaseController> logger) : base(logger) { }
 
         [HttpPost, Route("[action]")]
         public async Task<IActionResult> UploadImage(
             IFormFile uploadedFile,
-            [FromServices] IUseCaseHandler<UserAddImageRequest, UserAddImageResponse> handler)
+            [FromServices] IUseCaseHandler<AddImageRequest, AddImageResponse> handler)
         {
             if (uploadedFile == null)
             {
                 return BadRequest();
             }
 
-            UserAddImageResponse result = await handler.Handle(new UserAddImageRequest
-            {
-                FileName = uploadedFile.FileName,
-                FileUploader = new FileUploader(uploadedFile)
-            });
+            return await Invoke(
+                request: new AddImageRequest
+                {
+                    FileName = uploadedFile.FileName,
+                    FileUploader = new FileUploader(uploadedFile)
+                },
+                handler,
+                succeededActionResultFactory: result =>
+                {
+                    Image image = result.Value!;
+                    ImageViewModel viewModel = ImageViewModel.FromImage(image);
 
-            if(result.IsSucceeded)
-            {
-                Image image = result.Value!;
-                ImageViewModel viewModel = ImageViewModel.FromImage(image);
-
-                return Created(viewModel.Link, viewModel);
-            }
-
-            return BadRequest();
+                    return Created(viewModel.Link, viewModel);
+                });
         }
 
         [HttpGet, Route("[action]")]
-        public async Task<IActionResult> GetImageContent(
+        public Task<IActionResult> GetImageContent(
             Guid imageId,
-            [FromServices] IUseCaseHandler<UserGetImageContentRequest, UserGetImageContentResponse> handler)
+            [FromServices] IUseCaseHandler<GetImageContentRequest, GetImageContentResponse> handler)
         {
-            UserGetImageContentResponse result = await handler.Handle(new UserGetImageContentRequest { ImageId = imageId });
+            return Invoke(
+                request: new GetImageContentRequest { ImageId = imageId },
+                handler,
+                succeededActionResultFactory: result =>
+                {
+                    FileStream fileStream = result.FileStream;
+                    string fileName = result.FileName;
 
-            if(result.IsSucceeded)
-            {
-                FileStream fileStream = result.FileStream;
-                string fileName = result.FileName;
-
-                return File(fileStream, "application/octet-stream", fileName);
-            }
-
-            return BadRequest();
+                    return File(fileStream, "application/octet-stream", fileName);
+                });
         }
 
         [HttpGet, Route("[action]")]
-        public async Task<IActionResult> GetImages(
+        public Task<IActionResult> GetImages(
             [FromServices] IUseCaseHandler<GetUserImagesRequest, GetUserImagesResponse> handler)
         {
-            GetUserImagesResponse result = await handler.Handle(new GetUserImagesRequest());
-
-            if(result.IsSucceeded)
-            {
-                return Ok(result.Value!.Select(ImageViewModel.FromImage));
-            }
-
-            return BadRequest();
+            return Invoke(
+                request: new GetUserImagesRequest(),
+                handler,
+                succeededActionResultFactory: result => Ok(result.Value!.Select(ImageViewModel.FromImage)));
         }
 
         [HttpGet, Route("[action]")]
-        public async Task<IActionResult> GetOtherUserImages(
+        public Task<IActionResult> GetOtherUserImages(
             Guid userId,
-            [FromServices] IUseCaseHandler<UserGetOtherUserImagesRequest, UserGetOtherUserImagesResponse> handler)
+            [FromServices] IUseCaseHandler<GetOtherUserImagesRequest, GetOtherUserImagesResponse> handler)
         {
-            UserGetOtherUserImagesResponse result = await handler.Handle(new UserGetOtherUserImagesRequest { UserId = userId });
-
-            if (result.IsSucceeded)
-            {
-                return Ok(result.Value!.Select(ImageViewModel.FromImage));
-            }
-
-            return BadRequest();
+            return Invoke(
+                request: new GetOtherUserImagesRequest { UserId = userId }, 
+                handler,
+                succeededActionResultFactory: result => Ok(result.Value!.Select(ImageViewModel.FromImage)));
         }
     }
 }

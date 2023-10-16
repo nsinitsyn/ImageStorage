@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ImageStorage.Application.RequestModels;
+namespace ImageStorage.Application.Requests;
 
-public class UserRegisterRequest
+public class RegisterUserRequest
 {
     [Required]
     public string Name { get; set; }
@@ -15,6 +15,6 @@ public class UserRegisterRequest
 
     public override string ToString()
     {
-        return $"Name={Name};Email={Email};";
+        return $"{nameof(RegisterUserRequest)}: Name={Name};Email={Email};";
     }
 }

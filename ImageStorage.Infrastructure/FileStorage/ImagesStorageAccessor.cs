@@ -25,11 +25,16 @@ public class ImagesStorageAccessor : IImagesStorageAccessor, IDisposable
         Directory.CreateDirectory(GetUserDirectoryAbsolutePath(userId));
     }
 
-    public FileStream CreateFileStreamForSaving(Guid userId, string fileName, Guid imageId)
+    public bool IsFileExtensionAllowed(string fileName)
     {
         string? fileExtension = Path.GetExtension(fileName);
 
-        if(string.IsNullOrEmpty(fileExtension) || !_allowedExtensions.Contains(fileExtension))
+        return !string.IsNullOrEmpty(fileExtension) && _allowedExtensions.Contains(fileExtension);
+    }
+
+    public FileStream CreateFileStreamForSaving(Guid userId, string fileName, Guid imageId)
+    {
+        if(!IsFileExtensionAllowed(fileName))
         {
             throw new InvalidOperationException("File extension not allowed.");
         }
@@ -48,6 +53,11 @@ public class ImagesStorageAccessor : IImagesStorageAccessor, IDisposable
         _forDispose.Add(fileStream);
 
         return fileStream;
+    }
+
+    public void DeleteFile(Guid userId, Guid imageId)
+    {
+        File.Delete(GetImageAbsolutePath(userId, imageId));
     }
 
     private string GetUserDirectoryAbsolutePath(Guid userId) => Path.Combine(_fileStoragePath, userId.ToString());

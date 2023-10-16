@@ -1,6 +1,7 @@
-﻿using ImageStorage.Application.Handlers.Base;
-using ImageStorage.Application.RequestModels;
-using ImageStorage.Application.ResponseModels;
+﻿using ImageStorage.Application.Common;
+using ImageStorage.Application.Handlers.Base;
+using ImageStorage.Application.Requests;
+using ImageStorage.Application.Responses;
 using ImageStorage.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,7 +15,11 @@ public class GetUserImagesHandler : BaseUseCaseHandler<GetUserImagesRequest, Get
     {
         var result = new GetUserImagesResponse();
 
-        Guid userId = SessionContext.GetRequiredAuthorizedUserId();
+        if (!SessionContext.TryGetRequiredAuthorizedUserId(out Guid userId))
+        {
+            result.AddError(new(OperationErrorCode.NotAuthorized));
+            return result;
+        }
 
         User user = await DbAccessor.Users
             .AsNoTracking()
