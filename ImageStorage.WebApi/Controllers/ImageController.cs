@@ -1,7 +1,6 @@
-using ImageStorage.Application.Common;
+using ImageStorage.Application.Handlers.Base;
 using ImageStorage.Application.RequestModels;
 using ImageStorage.Application.ResponseModels;
-using ImageStorage.Application.Services;
 using ImageStorage.Domain.Entities;
 using ImageStorage.WebApi.Helpers;
 using ImageStorage.WebApi.ViewModels;
@@ -13,26 +12,24 @@ namespace ImageStorage.WebApi.Controllers
     [ApiController, Route("[controller]"), Authorize]
     public class ImageController : ControllerBase
     {
-        private readonly UserApplicationService _userApplicationService;
         private readonly ILogger<ImageController> _logger;
 
-        public ImageController(
-            UserApplicationService userApplicationService,
-            ILogger<ImageController> logger)
+        public ImageController(ILogger<ImageController> logger)
         {
-            _userApplicationService = userApplicationService;
             _logger = logger;
         }
 
         [HttpPost, Route("[action]")]
-        public async Task<IActionResult> UploadImage(IFormFile uploadedFile)
+        public async Task<IActionResult> UploadImage(
+            IFormFile uploadedFile,
+            [FromServices] IUseCaseHandler<UserAddImageRequest, UserAddImageResponse> handler)
         {
             if (uploadedFile == null)
             {
                 return BadRequest();
             }
 
-            OperationResult<Image> result = await _userApplicationService.AddImage(new UserAddImageRequest
+            UserAddImageResponse result = await handler.Handle(new UserAddImageRequest
             {
                 FileName = uploadedFile.FileName,
                 FileUploader = new FileUploader(uploadedFile)
@@ -50,15 +47,16 @@ namespace ImageStorage.WebApi.Controllers
         }
 
         [HttpGet, Route("[action]")]
-        public async Task<IActionResult> GetImageContent(Guid imageId)
+        public async Task<IActionResult> GetImageContent(
+            Guid imageId,
+            [FromServices] IUseCaseHandler<UserGetImageContentRequest, UserGetImageContentResponse> handler)
         {
-            OperationResult<UserGetImageContentResponse> result = await _userApplicationService.GetImageContent(
-                new UserGetImageContentRequest { ImageId = imageId });
+            UserGetImageContentResponse result = await handler.Handle(new UserGetImageContentRequest { ImageId = imageId });
 
             if(result.IsSucceeded)
             {
-                FileStream fileStream = result.Value!.FileStream;
-                string fileName = result.Value!.FileName;
+                FileStream fileStream = result.FileStream;
+                string fileName = result.FileName;
 
                 return File(fileStream, "application/octet-stream", fileName);
             }
@@ -67,9 +65,10 @@ namespace ImageStorage.WebApi.Controllers
         }
 
         [HttpGet, Route("[action]")]
-        public async Task<IActionResult> GetImages()
+        public async Task<IActionResult> GetImages(
+            [FromServices] IUseCaseHandler<GetUserImagesRequest, GetUserImagesResponse> handler)
         {
-            OperationResult<IReadOnlyCollection<Image>> result = await _userApplicationService.GetUserImages();
+            GetUserImagesResponse result = await handler.Handle(new GetUserImagesRequest());
 
             if(result.IsSucceeded)
             {
@@ -80,10 +79,11 @@ namespace ImageStorage.WebApi.Controllers
         }
 
         [HttpGet, Route("[action]")]
-        public async Task<IActionResult> GetOtherUserImages(Guid userId)
+        public async Task<IActionResult> GetOtherUserImages(
+            Guid userId,
+            [FromServices] IUseCaseHandler<UserGetOtherUserImagesRequest, UserGetOtherUserImagesResponse> handler)
         {
-            OperationResult<IReadOnlyCollection<Image>> result = await _userApplicationService.GetOtherUserImages(
-                new UserGetOtherUserImagesRequest { UserId = userId });
+            UserGetOtherUserImagesResponse result = await handler.Handle(new UserGetOtherUserImagesRequest { UserId = userId });
 
             if (result.IsSucceeded)
             {

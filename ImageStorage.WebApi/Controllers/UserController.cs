@@ -1,7 +1,6 @@
-using ImageStorage.Application.Common;
+using ImageStorage.Application.Handlers.Base;
 using ImageStorage.Application.RequestModels;
-using ImageStorage.Application.Services;
-using ImageStorage.Domain.Entities;
+using ImageStorage.Application.ResponseModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,25 +9,23 @@ namespace ImageStorage.WebApi.Controllers
     [ApiController, Route("[controller]"), Authorize]
     public class UserController : ControllerBase
     {
-        private readonly UserApplicationService _userApplicationService;
         private readonly ILogger<UserController> _logger;
 
-        public UserController(
-            UserApplicationService userApplicationService,
-            ILogger<UserController> logger)
+        public UserController(ILogger<UserController> logger)
         {
-            _userApplicationService = userApplicationService;
             _logger = logger;
         }
 
         [HttpPost, Route("[action]"), AllowAnonymous]
-        public async Task<IActionResult> Register(UserRegisterRequest request)
+        public async Task<IActionResult> Register(
+            UserRegisterRequest request,
+            [FromServices] IUseCaseHandler<UserRegisterRequest, UserRegisterResponse> handler)
         {
-            OperationResult<User> result;
+            UserRegisterResponse result;
 
             try
             {
-                result = await _userApplicationService.RegisterUser(request);
+                result = await handler.Handle(request);
             }
             catch (Exception ex)
             {
@@ -45,13 +42,15 @@ namespace ImageStorage.WebApi.Controllers
         }
 
         [HttpPost, Route("[action]")]
-        public async Task<IActionResult> AddFriend(UserAddFriendRequest request)
+        public async Task<IActionResult> AddFriend(
+            UserAddFriendRequest request,
+            [FromServices] IUseCaseHandler<UserAddFriendRequest, UserAddFriendResponse> handler)
         {
-            OperationResult result;
+            UserAddFriendResponse result;
 
             try
             {
-                result = await _userApplicationService.AddFriend(request);
+                result = await handler.Handle(request);
             }
             catch (Exception ex)
             {

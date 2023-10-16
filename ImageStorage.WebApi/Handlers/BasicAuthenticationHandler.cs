@@ -6,9 +6,6 @@ using System.Text.Encodings.Web;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using ImageStorage.Application.Services;
-using System.Xml.Linq;
-using ImageStorage.Application.Dependencies;
-using System;
 using ImageStorage.Domain.Entities;
 using ImageStorage.Infrastructure.Session;
 
@@ -17,7 +14,7 @@ namespace ImageStorage.WebApi.Handlers;
 public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
     private readonly ISessionContextWriter _sessionContext;
-    private readonly UserApplicationService _userService;
+    private readonly UserService _userService;
 
     public BasicAuthenticationHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
@@ -25,7 +22,7 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
         UrlEncoder encoder,
         ISystemClock clock,
         ISessionContextWriter sessionContext,
-        UserApplicationService userService)
+        UserService userService)
         : base(options, logger, encoder, clock)
     {
         _sessionContext = sessionContext;

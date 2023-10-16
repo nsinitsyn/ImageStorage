@@ -1,4 +1,9 @@
-﻿using ImageStorage.Application.Dependencies;
+﻿using ImageStorage.Application;
+using ImageStorage.Application.Dependencies;
+using ImageStorage.Application.Handlers;
+using ImageStorage.Application.Handlers.Base;
+using ImageStorage.Application.RequestModels;
+using ImageStorage.Application.ResponseModels;
 using ImageStorage.Application.Services;
 using ImageStorage.Infrastructure.Configuration;
 using ImageStorage.Infrastructure.DbAccess;
@@ -8,9 +13,7 @@ using ImageStorage.WebApi.Handlers;
 using ImageStorage.WebApi.Helpers;
 using ImageStorage.WebApi.Options;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ImageStorage.WebApi.Extensions;
 
@@ -33,17 +36,19 @@ public static class WebApplicationBuilderExtensions
 
         services.Configure<AppConfiguration>(builder.Configuration.GetSection(nameof(AppConfiguration)));
 
-        AddApplicationServices(services);
+        services.AddApplication();
+
+        AddInfrastructure(services);
     }
 
-    private static void AddApplicationServices(IServiceCollection services)
+    private static void AddInfrastructure(IServiceCollection services)
     {
-        services.AddSingleton<SessionContext>();
-        services.AddSingleton<ISessionContext, SessionContext>(sp => sp.GetRequiredService<SessionContext>());
-        services.AddSingleton<ISessionContextWriter, SessionContext>(sp => sp.GetRequiredService<SessionContext>());
-        services.AddTransient<IHashCalculator, HashCalculator>();
-        services.AddScoped<IDbAccessor, AppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
-        services.AddTransient<UserApplicationService>();
-        services.AddTransient<IImagesStorageAccessor, ImagesStorageAccessor>();
+        services
+            .AddScoped<IDbAccessor, AppDbContext>(sp => sp.GetRequiredService<AppDbContext>())
+            .AddTransient<IImagesStorageAccessor, ImagesStorageAccessor>()
+            .AddTransient<IHashCalculator, HashCalculator>()
+            .AddSingleton<SessionContext>()
+            .AddSingleton<ISessionContext, SessionContext>(sp => sp.GetRequiredService<SessionContext>())
+            .AddSingleton<ISessionContextWriter, SessionContext>(sp => sp.GetRequiredService<SessionContext>());
     }
 }

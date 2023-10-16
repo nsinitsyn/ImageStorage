@@ -1,6 +1,8 @@
-﻿namespace ImageStorage.Application.ResponseModels;
+﻿using ImageStorage.Application.Common;
 
-public class UserGetImageContentResponse
+namespace ImageStorage.Application.ResponseModels;
+
+public class UserGetImageContentResponse : OperationResult
 {
     public string FileName { get; set; }
 
