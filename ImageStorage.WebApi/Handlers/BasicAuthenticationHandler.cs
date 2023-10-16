@@ -5,22 +5,37 @@ using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using ImageStorage.Application.Services;
+using System.Xml.Linq;
+using ImageStorage.Application.Dependencies;
+using System;
+using ImageStorage.Domain.Entities;
+using ImageStorage.Infrastructure.Session;
 
 namespace ImageStorage.WebApi.Handlers;
 
 public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
+    private readonly ISessionContextWriter _sessionContext;
+    private readonly UserApplicationService _userService;
+
     public BasicAuthenticationHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
-        ISystemClock clock)
+        ISystemClock clock,
+        ISessionContextWriter sessionContext,
+        UserApplicationService userService)
         : base(options, logger, encoder, clock)
     {
+        _sessionContext = sessionContext;
+        _userService = userService;
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
+        _sessionContext.AuthorizedUserId = null;
+
         Endpoint? endpoint = Context.GetEndpoint();
 
         if (endpoint != null)
@@ -33,17 +48,23 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
             }
         }
 
-        string username = null;
+        string? name = null;
 
         try
         {
             var authHeader = AuthenticationHeaderValue.Parse(Request.Headers["Authorization"]);
             var credentials = Encoding.UTF8.GetString(Convert.FromBase64String(authHeader.Parameter)).Split(':');
-            username = credentials.FirstOrDefault();
+            name = credentials.FirstOrDefault();
             var password = credentials.LastOrDefault();
 
-            //if (!_userService.ValidateCredentials(username, password))
-            //    throw new ArgumentException("Invalid credentials");
+            User? user = await _userService.ValidateCredentials(name, password);
+
+            if (user == null)
+            {
+                throw new ArgumentException("Invalid credentials");
+            }
+
+            _sessionContext.AuthorizedUserId = user.Id;
         }
         catch (Exception ex)
         {
@@ -52,7 +73,7 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
 
         var claims = new[] 
         { 
-            new Claim(ClaimTypes.Name, username) 
+            new Claim(ClaimTypes.Name, name) 
         };
 
         var identity = new ClaimsIdentity(claims, Scheme.Name);

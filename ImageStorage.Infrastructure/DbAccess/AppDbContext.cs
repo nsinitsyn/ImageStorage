@@ -16,9 +16,7 @@ public class AppDbContext : DbContext, IDbAccessor
 
     public DbSet<User> Users { get; set; }
 
-    public IQueryable<User> UsersAsNoTracking => Users.AsNoTracking();
-
-    public IQueryable<User> TrackedUsers => Users;
+    public DbSet<Image> Images { get; set; }
 
     public void AddUser(User user) => Users.Add(user);
 

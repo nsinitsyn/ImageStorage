@@ -11,14 +11,16 @@ internal class UserConfiguration : IEntityTypeConfiguration<User>
     {
         builder.ToTable("Users");
 
+        builder.Property(p => p.Id).ValueGeneratedNever();
+
         builder.Property(x => x.Name).HasMaxLength(256);
         builder.Property(x => x.Email).HasMaxLength(256);
 
         builder.HasIndex(x => x.Name).IsUnique();
         builder.HasIndex(x => x.Email).IsUnique();
 
-        builder.HasMany(x => x.UsersAddedAsFriend)
-            .WithMany(x => x.Friends)
+        builder.HasMany(x => x.Friends)
+            .WithMany(x => x.UsersAddedAsFriend)
             .UsingEntity<UserFriendLink>(
                 b => b.HasOne(x => x.Friend).WithMany().HasForeignKey(x => x.FriendId),
                 b => b.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId))

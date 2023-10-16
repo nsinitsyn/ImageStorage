@@ -60,4 +60,17 @@ public class User
     {
         _images.Add(image);
     }
+
+    /// <summary>
+    /// Проверяет, является ли пользователь userId другом текущего пользователя.
+    /// </summary>
+    public bool IsFriend(Guid userId)
+    {
+        if (Friends == null)
+        {
+            throw new DomainException("Friends list cannot be null.");
+        }
+
+        return Friends.Any(x => x.Id == userId);
+    }
 }

@@ -47,7 +47,7 @@ namespace ImageStorage.WebApi.Controllers
         [HttpPost, Route("[action]")]
         public async Task<IActionResult> AddFriend(UserAddFriendRequest request)
         {
-            OperationResult<User> result;
+            OperationResult result;
 
             try
             {
@@ -61,7 +61,7 @@ namespace ImageStorage.WebApi.Controllers
 
             if (result.IsSucceeded)
             {
-                return Ok(result.Value!.Id);
+                return Ok();
             }
 
             return BadRequest(result.ToString());

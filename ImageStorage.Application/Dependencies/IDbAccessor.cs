@@ -1,12 +1,13 @@
 ﻿using ImageStorage.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace ImageStorage.Application.Dependencies;
 
 public interface IDbAccessor
 {
-    IQueryable<User> UsersAsNoTracking { get; }
+    DbSet<User> Users { get; }
 
-    IQueryable<User> TrackedUsers { get; }
+    DbSet<Image> Images { get; }
 
     void AddUser(User user);
 
