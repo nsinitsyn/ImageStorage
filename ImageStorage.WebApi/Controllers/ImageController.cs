@@ -6,6 +6,7 @@ using ImageStorage.WebApi.Helpers;
 using ImageStorage.WebApi.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace ImageStorage.WebApi.Controllers
 {
@@ -16,14 +17,9 @@ namespace ImageStorage.WebApi.Controllers
 
         [HttpPost, Route("[action]")]
         public async Task<IActionResult> UploadImage(
-            IFormFile uploadedFile,
+            [Required] IFormFile uploadedFile,
             [FromServices] IUseCaseHandler<AddImageRequest, AddImageResponse> handler)
         {
-            if (uploadedFile == null)
-            {
-                return BadRequest();
-            }
-
             return await Invoke(
                 request: new AddImageRequest
                 {
@@ -42,7 +38,7 @@ namespace ImageStorage.WebApi.Controllers
 
         [HttpGet, Route("[action]")]
         public Task<IActionResult> GetImageContent(
-            Guid imageId,
+            [Required] Guid imageId,
             [FromServices] IUseCaseHandler<GetImageContentRequest, GetImageContentResponse> handler)
         {
             return Invoke(
@@ -69,7 +65,7 @@ namespace ImageStorage.WebApi.Controllers
 
         [HttpGet, Route("[action]")]
         public Task<IActionResult> GetOtherUserImages(
-            Guid userId,
+            [Required] Guid userId,
             [FromServices] IUseCaseHandler<GetOtherUserImagesRequest, GetOtherUserImagesResponse> handler)
         {
             return Invoke(

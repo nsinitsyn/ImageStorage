@@ -19,6 +19,11 @@ public class BaseController : ControllerBase
         Func<TResponse, IActionResult> succeededActionResultFactory)
         where TResponse : OperationResult
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest();
+        }
+
         TResponse result;
 
         try

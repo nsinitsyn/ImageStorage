@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ImageStorage.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20231016095009_InitialMigration")]
+    [Migration("20231016145355_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -28,7 +28,6 @@ namespace ImageStorage.Infrastructure.Migrations
             modelBuilder.Entity("ImageStorage.Domain.Entities.Image", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("FileName")
@@ -39,7 +38,7 @@ namespace ImageStorage.Infrastructure.Migrations
                     b.Property<DateTime>("UploadedDateTimeUtc")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid?>("UserId")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -52,7 +51,6 @@ namespace ImageStorage.Infrastructure.Migrations
             modelBuilder.Entity("ImageStorage.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Email")
@@ -97,9 +95,13 @@ namespace ImageStorage.Infrastructure.Migrations
 
             modelBuilder.Entity("ImageStorage.Domain.Entities.Image", b =>
                 {
-                    b.HasOne("ImageStorage.Domain.Entities.User", null)
+                    b.HasOne("ImageStorage.Domain.Entities.User", "User")
                         .WithMany("Images")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ImageStorage.Infrastructure.DbAccess.Links.UserFriendLink", b =>

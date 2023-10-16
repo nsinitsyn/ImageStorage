@@ -21,11 +21,17 @@ public class GetOtherUserImagesHandler : BaseUseCaseHandler<GetOtherUserImagesRe
             return result;
         }
 
-        User otherUser = await DbAccessor.Users
+        User? otherUser = await DbAccessor.Users
             .AsNoTracking()
             .Include(x => x.Friends)
             .Include(x => x.Images)
-            .FirstAsync(x => x.Id == request.UserId);
+            .FirstOrDefaultAsync(x => x.Id == request.UserId);
+
+        if(otherUser == null)
+        {
+            result.AddError(new(OperationErrorCode.NotFound));
+            return result;
+        }
 
         if (!otherUser.IsFriend(userId))
         {

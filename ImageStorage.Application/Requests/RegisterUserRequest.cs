@@ -11,6 +11,7 @@ public class RegisterUserRequest
     public string Password { get; set; }
 
     [Required]
+    [EmailAddress]
     public string Email { get; set; }
 
     public override string ToString()
