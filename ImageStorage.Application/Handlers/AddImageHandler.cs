@@ -34,7 +34,7 @@ public class AddImageHandler : BaseUseCaseHandler<AddImageRequest, AddImageRespo
 
         User user = await DbAccessor.Users
             .Include(x => x.Images)
-        .FirstAsync(x => x.Id == userId);
+            .FirstAsync(x => x.Id == userId);
 
         user.AddImage(image);
 
