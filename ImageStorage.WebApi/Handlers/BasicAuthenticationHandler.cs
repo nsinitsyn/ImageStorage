@@ -79,4 +79,10 @@ public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSc
 
         return AuthenticateResult.Success(ticket);
     }
+
+    protected override async Task HandleChallengeAsync(AuthenticationProperties properties)
+    {
+        Response.Headers["WWW-Authenticate"] = "Basic realm=\"ImageStorage\", charset=\"UTF-8\"";
+        await base.HandleChallengeAsync(properties);
+    }
 }
