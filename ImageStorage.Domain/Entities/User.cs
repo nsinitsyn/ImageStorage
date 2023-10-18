@@ -45,7 +45,7 @@ public class User
     {
         if(Friends == null)
         {
-            throw new DomainException("Friends list cannot be null.");
+            throw new InvalidOperationException("Friends list cannot be null.");
         }
 
         if (Friends.Any(x => x.Id == user.Id))
@@ -68,7 +68,7 @@ public class User
     {
         if (Friends == null)
         {
-            throw new DomainException("Friends list cannot be null.");
+            throw new InvalidOperationException("Friends list cannot be null.");
         }
 
         return Friends.Any(x => x.Id == userId);

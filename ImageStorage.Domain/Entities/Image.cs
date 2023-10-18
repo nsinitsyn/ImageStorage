@@ -1,6 +1,4 @@
-﻿using ImageStorage.Domain.Exceptions;
-
-namespace ImageStorage.Domain.Entities;
+﻿namespace ImageStorage.Domain.Entities;
 
 public class Image
 {
@@ -38,9 +36,14 @@ public class Image
             return true;
         }
 
-        if(User.Friends == null)
+        if (User == null)
         {
-            throw new DomainException("Friends list cannot be null.");
+            throw new InvalidOperationException("User cannot be null.");
+        }
+
+        if (User.Friends == null)
+        {
+            throw new InvalidOperationException("Friends list cannot be null.");
         }
 
         // Пользователь может просматривать изображения тех пользователей, которые добавили его в друзья.
